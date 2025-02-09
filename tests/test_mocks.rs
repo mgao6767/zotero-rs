@@ -48,4 +48,28 @@ mod mock_tests {
         let incoming_dt = chrono::DateTime::parse_from_rfc3339(date_modified).unwrap();
         assert_eq!(test_dt, incoming_dt);
     }
+
+    #[tokio::test]
+    async fn test_locale() {
+        let server = MockServer::start();
+        let item_doc = std::fs::read_to_string("tests/api_responses/item_doc.json")
+            .expect("Failed to read item_doc.json");
+        let mock = server.mock(|when, then| {
+            when.method(GET)
+                .path("/users/myuserID/items")
+                .query_param("locale", "en-US");
+            then.status(200)
+                .header("content-type", "application/json")
+                .body(&item_doc);
+        });
+
+        let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
+        zot.set_locale("en-US");
+        zot.set_endpoint(&server.base_url());
+        let items_data = zot.items().await.unwrap();
+        // Verify something in the JSON
+        let key = items_data["data"]["key"].as_str().unwrap();
+        assert_eq!(key, "X42A7DEE");
+        mock.assert();
+    }
 }

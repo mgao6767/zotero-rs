@@ -29,6 +29,7 @@ pub struct Zotero {
     endpoint: String,
     library_id: String,
     library_type: String,
+    locale: Option<String>,
 }
 
 impl Zotero {
@@ -58,11 +59,16 @@ impl Zotero {
             endpoint,
             library_id,
             library_type,
+            locale: Some("en-US".to_string()),
         })
     }
 
     pub fn set_endpoint(&mut self, endpoint: &str) {
         self.endpoint = endpoint.to_string();
+    }
+
+    pub fn set_locale(&mut self, locale: &str) {
+        self.locale = Some(locale.to_string());
     }
 
     fn default_headers(&self) -> Result<HeaderMap, ZoteroError> {
@@ -80,11 +86,14 @@ impl Zotero {
     }
 
     fn build_url(&self, path: &str) -> Result<Url, ZoteroError> {
-        let base_url = format!(
+        let mut url = Url::parse(&format!(
             "{}/{}/{}/{}",
             self.endpoint, self.library_type, self.library_id, path
-        );
-        Ok(Url::parse(&base_url)?)
+        ))?;
+        if let Some(ref loc) = self.locale {
+            url.query_pairs_mut().append_pair("locale", loc);
+        }
+        Ok(url)
     }
 
     async fn handle_response(&self, url: Url) -> Result<Value, ZoteroError> {
