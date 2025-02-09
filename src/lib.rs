@@ -92,13 +92,19 @@ impl Zotero {
         Ok(headers)
     }
 
-    fn build_url(&self, path: &str) -> Result<Url, ZoteroError> {
+    fn build_url(&self, path: &str, params: Option<&[(&str, &str)]>) -> Result<Url, ZoteroError> {
         let mut url = Url::parse(&format!(
             "{}/{}/{}/{}",
             self.endpoint, self.library_type, self.library_id, path
         ))?;
         if let Some(ref loc) = self.locale {
             url.query_pairs_mut().append_pair("locale", loc);
+        }
+        if let Some(params) = params {
+            let mut pairs = url.query_pairs_mut();
+            for &(key, value) in params {
+                pairs.append_pair(key, value);
+            }
         }
         Ok(url)
     }
@@ -160,90 +166,136 @@ impl Zotero {
         ))
     }
 
-    pub async fn key_info(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("keys/{}", self.api_key))?;
+    pub async fn key_info(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("keys/{}", self.api_key), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn top(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url("items/top")?;
+    pub async fn top(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+        let url = self.build_url("items/top", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn collections(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url("collections")?;
+    pub async fn collections(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+        let url = self.build_url("collections", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn collection(&self, collection_id: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("collections/{}", collection_id))?;
+    pub async fn collection(
+        &self,
+        collection_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("collections/{}", collection_id), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn collections_top(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url("collections/top")?;
+    pub async fn collections_top(
+        &self,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url("collections/top", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn collections_sub(&self, collection_id: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("collections/{}/collections", collection_id))?;
+    pub async fn collections_sub(
+        &self,
+        collection_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(
+            &format!("collections/{}/collections", collection_id),
+            params,
+        )?;
         self.handle_response(url).await
     }
 
-    pub async fn collection_items(&self, collection_id: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("collections/{}/items", collection_id))?;
+    pub async fn collection_items(
+        &self,
+        collection_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("collections/{}/items", collection_id), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn item(&self, item_id: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("items/{}", item_id))?;
+    pub async fn item(
+        &self,
+        item_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("items/{}", item_id), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn items(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url("items")?;
+    pub async fn items(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+        let url = self.build_url("items", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn fulltext_item(&self, item_key: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("items/{}/fulltext", item_key))?;
+    pub async fn fulltext_item(
+        &self,
+        item_key: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("items/{}/fulltext", item_key), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn new_fulltext(&self, since: &str) -> Result<Value, ZoteroError> {
-        let mut url = self.build_url("fulltext")?;
+    pub async fn new_fulltext(
+        &self,
+        since: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let mut url = self.build_url("fulltext", params)?;
         url.query_pairs_mut().append_pair("since", since);
         self.handle_response(url).await
     }
 
-    pub async fn trash(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url("items/trash")?;
+    pub async fn trash(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+        let url = self.build_url("items/trash", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn deleted(&self, since: &str) -> Result<Value, ZoteroError> {
-        let mut url = self.build_url("deleted")?;
+    pub async fn deleted(
+        &self,
+        since: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let mut url = self.build_url("deleted", params)?;
         url.query_pairs_mut().append_pair("since", since);
         self.handle_response(url).await
     }
 
-    pub async fn children(&self, item_id: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("items/{}/children", item_id))?;
+    pub async fn children(
+        &self,
+        item_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("items/{}/children", item_id), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn tags(&self) -> Result<Value, ZoteroError> {
-        let url = self.build_url("tags")?;
+    pub async fn tags(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+        let url = self.build_url("tags", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn item_tags(&self, item_id: &str) -> Result<Value, ZoteroError> {
-        let url = self.build_url(&format!("items/{}/tags", item_id))?;
+    pub async fn item_tags(
+        &self,
+        item_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
+        let url = self.build_url(&format!("items/{}/tags", item_id), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn file(&self, item_id: &str) -> Result<Bytes, ZoteroError> {
-        let url = self.build_url(&format!("items/{}/file", item_id))?;
+    pub async fn file(
+        &self,
+        item_id: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Bytes, ZoteroError> {
+        let url = self.build_url(&format!("items/{}/file", item_id), params)?;
         let response = self
             .client
             .get(url)

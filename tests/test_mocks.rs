@@ -18,7 +18,7 @@ mod mock_tests {
         });
         let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
         zot.set_endpoint(&server.base_url());
-        let items = zot.items().await.unwrap();
+        let items = zot.items(None).await.unwrap();
         println!("{:?}", items);
         mock.assert();
     }
@@ -36,7 +36,7 @@ mod mock_tests {
         });
         let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
         zot.set_endpoint(&server.base_url());
-        let items_data = zot.items().await.unwrap();
+        let items_data = zot.items(None).await.unwrap();
         let key = items_data["data"]["key"].as_str().unwrap();
         assert_eq!(key, "X42A7DEE");
         let name = items_data["data"]["creators"][0]["name"].as_str().unwrap();
@@ -66,7 +66,7 @@ mod mock_tests {
         let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
         zot.set_locale("en-US");
         zot.set_endpoint(&server.base_url());
-        let items_data = zot.items().await.unwrap();
+        let items_data = zot.items(None).await.unwrap();
         // Verify something in the JSON
         let key = items_data["data"]["key"].as_str().unwrap();
         assert_eq!(key, "X42A7DEE");
@@ -89,7 +89,7 @@ mod mock_tests {
 
         let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
         zot.set_endpoint(&server.base_url());
-        let future = zot.items();
+        let future = zot.items(None);
 
         let result = future.await;
         // Assert that the error is TooManyRequests
@@ -110,7 +110,7 @@ mod mock_tests {
 
         let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
         zot.set_endpoint(&server.base_url());
-        let file_data = zot.file("MYITEMID").await.unwrap();
+        let file_data = zot.file("MYITEMID", None).await.unwrap();
         assert_eq!(file_data, file_content);
         let expected_data = b"One very strange PDF\n";
         assert_eq!(&file_data[..expected_data.len()], expected_data);
