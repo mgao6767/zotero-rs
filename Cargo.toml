@@ -2,6 +2,13 @@
 name = "zotero-rs"
 version = "0.1.0"
 edition = "2021"
+authors = ["Adrian Gao <adrian.gao@outlook.com>"]
+description = "A Rust library for interacting with the Zotero API"
+license = "MIT"
+repository = "https://github.com/mgao6767/zotero-rs"
+documentation = "https://docs.rs/zotero-rs"
+keywords = ["zotero", "bibliography", "api", "library"]
+categories = ["api-bindings", "web-programming"]
 
 [dependencies]
 bytes = "1.10.0"
