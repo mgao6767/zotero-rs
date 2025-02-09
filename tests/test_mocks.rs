@@ -3,7 +3,7 @@ mod mock_tests {
     use httpmock::prelude::*;
     use std::fs;
     use tokio;
-    use zotero_rs::Zotero;
+    use zotero_rs::{Zotero, ZoteroError};
 
     #[tokio::test]
     async fn test_get_items() {
@@ -71,5 +71,28 @@ mod mock_tests {
         let key = items_data["data"]["key"].as_str().unwrap();
         assert_eq!(key, "X42A7DEE");
         mock.assert();
+    }
+
+    #[tokio::test]
+    async fn test_backoff() {
+        let server = MockServer::start();
+        let item_doc = std::fs::read_to_string("tests/api_responses/item_doc.json")
+            .expect("Failed to read item_doc.json");
+
+        server.mock(|when, then| {
+            when.method(GET).path("/users/myuserID/items");
+            then.status(429)
+                .header("content-type", "application/json")
+                .header("backoff", "0.2")
+                .body(&item_doc);
+        });
+
+        let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
+        zot.set_endpoint(&server.base_url());
+        let future = zot.items();
+
+        let result = future.await;
+        // Assert that the error is TooManyRequests
+        assert!(matches!(result, Err(ZoteroError::TooManyRequests(_))));
     }
 }

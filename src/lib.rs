@@ -20,6 +20,8 @@ pub enum ZoteroError {
     UrlParseError(#[from] ParseError),
     #[error("Header value error: {0}")]
     HeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
+    #[error("Too many requests: {0}")]
+    TooManyRequests(String),
 }
 
 #[derive(Debug)]
@@ -30,6 +32,7 @@ pub struct Zotero {
     library_id: String,
     library_type: String,
     locale: Option<String>,
+    max_retries: u8,
 }
 
 impl Zotero {
@@ -60,6 +63,7 @@ impl Zotero {
             library_id,
             library_type,
             locale: Some("en-US".to_string()),
+            max_retries: 5,
         })
     }
 
@@ -97,30 +101,60 @@ impl Zotero {
     }
 
     async fn handle_response(&self, url: Url) -> Result<Value, ZoteroError> {
-        let response = self
-            .client
-            .get(url)
-            .headers(self.default_headers()?)
-            .send()
-            .await?;
+        let mut attempts = 0;
+        let mut backoff = 0.0;
+        while attempts < self.max_retries {
+            let response = self
+                .client
+                .get(url.clone())
+                .headers(self.default_headers()?)
+                .send()
+                .await?;
 
-        let content_type = response
-            .headers()
-            .get(reqwest::header::CONTENT_TYPE)
-            .and_then(|v| v.to_str().ok())
-            .unwrap_or("");
+            if let Some(bo) = response.headers().get("backoff") {
+                if let Ok(val) = bo.to_str() {
+                    if let Ok(parsed_backoff) = val.parse::<f64>() {
+                        backoff = parsed_backoff;
+                    }
+                }
+            } else if let Some(retry_after) = response.headers().get("retry-after") {
+                if let Ok(val) = retry_after.to_str() {
+                    if let Ok(parsed_backoff) = val.parse::<f64>() {
+                        backoff = parsed_backoff;
+                    }
+                }
+            }
 
-        if content_type.starts_with("application/json") {
-            let json: Value = response.json().await?;
-            Ok(json)
-        } else if content_type.starts_with("text/html") {
-            let text = response.text().await?;
-            Ok(Value::String(text))
-        } else {
-            Err(ZoteroError::UnsupportedContentType(
-                content_type.to_string(),
-            ))
+            let status = response.status();
+            if status == reqwest::StatusCode::TOO_MANY_REQUESTS {
+                let delay_secs = backoff;
+                tokio::time::sleep(std::time::Duration::from_secs_f64(delay_secs)).await;
+                attempts += 1;
+                continue;
+            }
+
+            let content_type = response
+                .headers()
+                .get(reqwest::header::CONTENT_TYPE)
+                .and_then(|v| v.to_str().ok())
+                .unwrap_or("");
+
+            if content_type.starts_with("application/json") {
+                let json: Value = response.json().await?;
+                return Ok(json);
+            } else if content_type.starts_with("text/html") {
+                let text = response.text().await?;
+                return Ok(Value::String(text));
+            } else {
+                return Err(ZoteroError::UnsupportedContentType(
+                    content_type.to_string(),
+                ));
+            }
         }
+
+        Err(ZoteroError::TooManyRequests(
+            "429: Too Many Requests".to_string(),
+        ))
     }
 
     pub async fn key_info(&self) -> Result<Value, ZoteroError> {
