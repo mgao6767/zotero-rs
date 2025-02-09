@@ -313,4 +313,37 @@ impl Zotero {
             )))
         }
     }
+
+    pub async fn last_modified_version(
+        &self,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<i64, ZoteroError> {
+        let mut params_with_limit = params.unwrap_or(&[]).to_vec();
+        params_with_limit.push(("limit", "1"));
+        let url = self.build_url("items", Some(params_with_limit.as_slice()))?;
+        let response = self
+            .client
+            .get(url)
+            .headers(self.default_headers()?)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            if let Some(last_modified_version) = response.headers().get("last-modified-version") {
+                if let Ok(version_str) = last_modified_version.to_str() {
+                    if let Ok(version) = version_str.parse::<i64>() {
+                        return Ok(version);
+                    }
+                }
+            }
+            Err(ZoteroError::FileRetrievalError(
+                "Failed to parse last-modified-version header".to_string(),
+            ))
+        } else {
+            Err(ZoteroError::FileRetrievalError(format!(
+                "Failed to retrieve last modified version: {}",
+                response.status()
+            )))
+        }
+    }
 }

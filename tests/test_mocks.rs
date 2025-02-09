@@ -116,4 +116,26 @@ mod mock_tests {
         assert_eq!(&file_data[..expected_data.len()], expected_data);
         mock.assert();
     }
+
+    #[tokio::test]
+    async fn test_last_modified_version() {
+        let server = MockServer::start();
+        let items_doc = fs::read_to_string("tests/api_responses/items_doc.json")
+            .expect("Failed to read items_doc.json");
+        let mock = server.mock(|when, then| {
+            when.method(GET)
+                .path("/users/myuserID/items")
+                .query_param("limit", "1");
+            then.status(200)
+                .header("content-type", "application/json")
+                .header("last-modified-version", "12345")
+                .body(&items_doc);
+        });
+
+        let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
+        zot.set_endpoint(&server.base_url());
+        let version = zot.last_modified_version(None).await.unwrap();
+        assert_eq!(version, 12345);
+        mock.assert();
+    }
 }
