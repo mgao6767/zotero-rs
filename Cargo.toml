@@ -1,6 +1,6 @@
 [package]
 name = "zotero-rs"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 authors = ["Adrian Gao <adrian.gao@outlook.com>"]
 description = "A Rust library for interacting with the Zotero API"
