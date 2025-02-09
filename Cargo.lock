@@ -2478,6 +2478,7 @@ dependencies = [
 name = "zotero-rs"
 version = "0.1.0"
 dependencies = [
+ "bytes",
  "chrono",
  "dotenv",
  "httpmock",

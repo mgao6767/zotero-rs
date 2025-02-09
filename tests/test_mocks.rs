@@ -95,4 +95,25 @@ mod mock_tests {
         // Assert that the error is TooManyRequests
         assert!(matches!(result, Err(ZoteroError::TooManyRequests(_))));
     }
+
+    #[tokio::test]
+    async fn test_get_file() {
+        let server = MockServer::start();
+        let file_content =
+            fs::read("tests/api_responses/item_file.pdf").expect("Failed to read item_file.pdf");
+        let mock = server.mock(|when, then| {
+            when.method(GET).path("/users/myuserID/items/MYITEMID/file");
+            then.status(200)
+                .header("content-type", "application/pdf")
+                .body(file_content.clone());
+        });
+
+        let mut zot = Zotero::user_lib("myuserID", "myuserkey").unwrap();
+        zot.set_endpoint(&server.base_url());
+        let file_data = zot.file("MYITEMID").await.unwrap();
+        assert_eq!(file_data, file_content);
+        let expected_data = b"One very strange PDF\n";
+        assert_eq!(&file_data[..expected_data.len()], expected_data);
+        mock.assert();
+    }
 }

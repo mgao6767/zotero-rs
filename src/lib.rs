@@ -1,5 +1,6 @@
 #[allow(dead_code)]
 #[allow(unused)]
+use bytes::Bytes;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, USER_AGENT};
 use reqwest::Client;
 use reqwest::Url;
@@ -22,6 +23,8 @@ pub enum ZoteroError {
     HeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
     #[error("Too many requests: {0}")]
     TooManyRequests(String),
+    #[error("Failed to retrieve file: {0}")]
+    FileRetrievalError(String),
 }
 
 #[derive(Debug)]
@@ -237,5 +240,25 @@ impl Zotero {
     pub async fn item_tags(&self, item_id: &str) -> Result<Value, ZoteroError> {
         let url = self.build_url(&format!("items/{}/tags", item_id))?;
         self.handle_response(url).await
+    }
+
+    pub async fn file(&self, item_id: &str) -> Result<Bytes, ZoteroError> {
+        let url = self.build_url(&format!("items/{}/file", item_id))?;
+        let response = self
+            .client
+            .get(url)
+            .headers(self.default_headers()?)
+            .send()
+            .await?;
+
+        if response.status().is_success() {
+            let bytes = response.bytes().await?;
+            Ok(bytes)
+        } else {
+            Err(ZoteroError::FileRetrievalError(format!(
+                "Failed to retrieve file: {}",
+                response.status()
+            )))
+        }
     }
 }
