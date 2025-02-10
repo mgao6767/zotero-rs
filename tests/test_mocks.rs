@@ -112,8 +112,13 @@ mod mock_tests {
         zot.set_endpoint(&server.base_url());
         let file_data = zot.file("MYITEMID", None).await.unwrap();
         assert_eq!(file_data, file_content);
+        // Normalize line endings to LF for comparison
         let expected_data = b"One very strange PDF\n";
-        assert_eq!(&file_data[..expected_data.len()], expected_data);
+        let normalized_file_data: Vec<u8> = file_data
+            .iter()
+            .map(|&b| if b == b'\r' { b'\n' } else { b })
+            .collect();
+        assert_eq!(&normalized_file_data[..expected_data.len()], expected_data);
         mock.assert();
     }
 
