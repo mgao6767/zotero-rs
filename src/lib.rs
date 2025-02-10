@@ -3,27 +3,12 @@ use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, USER_AGENT};
 use reqwest::Client;
 use reqwest::Url;
 use serde_json::Value;
-use thiserror::Error;
-use url::ParseError;
+
+mod errors;
+pub use errors::ZoteroError;
 
 const VERSION: &str = "1";
 const API_VERSION: &str = "3";
-
-#[derive(Debug, Error)]
-pub enum ZoteroError {
-    #[error("HTTP request error: {0}")]
-    HttpRequestError(#[from] reqwest::Error),
-    #[error("Unsupported content type: {0}")]
-    UnsupportedContentType(String),
-    #[error("URL parse error: {0}")]
-    UrlParseError(#[from] ParseError),
-    #[error("Header value error: {0}")]
-    HeaderValueError(#[from] reqwest::header::InvalidHeaderValue),
-    #[error("Too many requests: {0}")]
-    TooManyRequests(String),
-    #[error("Failed to retrieve file: {0}")]
-    FileRetrievalError(String),
-}
 
 #[derive(Debug)]
 pub struct Zotero {
