@@ -1,5 +1,3 @@
-#[allow(dead_code)]
-#[allow(unused)]
 use bytes::Bytes;
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, USER_AGENT};
 use reqwest::Client;
@@ -166,22 +164,28 @@ impl Zotero {
         ))
     }
 
-    pub async fn key_info(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+    pub async fn get_key_info(
+        &self,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
         let url = self.build_url(&format!("keys/{}", self.api_key), params)?;
         self.handle_response(url).await
     }
 
-    pub async fn top(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+    pub async fn get_top(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
         let url = self.build_url("items/top", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn collections(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+    pub async fn get_collections(
+        &self,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Value, ZoteroError> {
         let url = self.build_url("collections", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn collection(
+    pub async fn get_collection(
         &self,
         collection_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -190,7 +194,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn collections_top(
+    pub async fn get_collections_top(
         &self,
         params: Option<&[(&str, &str)]>,
     ) -> Result<Value, ZoteroError> {
@@ -198,7 +202,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn collections_sub(
+    pub async fn get_collections_sub(
         &self,
         collection_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -210,7 +214,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn collection_items(
+    pub async fn get_collection_items(
         &self,
         collection_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -219,7 +223,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn item(
+    pub async fn get_item(
         &self,
         item_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -228,12 +232,12 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn items(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+    pub async fn get_items(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
         let url = self.build_url("items", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn fulltext_item(
+    pub async fn get_fulltext_item(
         &self,
         item_key: &str,
         params: Option<&[(&str, &str)]>,
@@ -242,7 +246,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn new_fulltext(
+    pub async fn get_new_fulltext(
         &self,
         since: &str,
         params: Option<&[(&str, &str)]>,
@@ -252,12 +256,12 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn trash(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+    pub async fn get_trash(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
         let url = self.build_url("items/trash", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn deleted(
+    pub async fn get_deleted(
         &self,
         since: &str,
         params: Option<&[(&str, &str)]>,
@@ -267,7 +271,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn children(
+    pub async fn get_children(
         &self,
         item_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -276,12 +280,12 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn tags(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
+    pub async fn get_tags(&self, params: Option<&[(&str, &str)]>) -> Result<Value, ZoteroError> {
         let url = self.build_url("tags", params)?;
         self.handle_response(url).await
     }
 
-    pub async fn item_tags(
+    pub async fn get_item_tags(
         &self,
         item_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -290,7 +294,7 @@ impl Zotero {
         self.handle_response(url).await
     }
 
-    pub async fn file(
+    pub async fn get_file(
         &self,
         item_id: &str,
         params: Option<&[(&str, &str)]>,
@@ -314,7 +318,7 @@ impl Zotero {
         }
     }
 
-    pub async fn last_modified_version(
+    pub async fn get_last_modified_version(
         &self,
         params: Option<&[(&str, &str)]>,
     ) -> Result<i64, ZoteroError> {

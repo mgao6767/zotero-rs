@@ -8,7 +8,7 @@ use zotero_rs::Zotero;
 #[tokio::main]
 async fn main() {
     let zotero = Zotero::group_lib("library_id", "api_key").unwrap();
-    match zotero.top(None).await {
+    match zotero.get_top(None).await {
         Ok(items) => println!("{:#?}", items),
         Err(e) => eprintln!("Error: {}", e),
     }
@@ -23,7 +23,7 @@ use zotero_rs::Zotero;
 fn main() {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     let zotero = Zotero::group_lib("library_id", "api_key").unwrap();
-    match runtime.block_on(zotero.items(None)) {
+    match runtime.block_on(zotero.get_items(None)) {
         Ok(items) => println!("{:#?}", items),
         Err(e) => eprintln!("Error: {}", e),
     }
