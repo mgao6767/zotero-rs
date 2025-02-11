@@ -348,8 +348,24 @@ impl Zotero {
         self.handle_response(url)
     }
 
+    pub fn get_item_fields(&self) -> Result<Value, ZoteroError> {
+        let url = self.build_url_no_lib("itemFields", None)?;
+        self.handle_response(url)
+    }
+
     pub fn get_creator_fields(&self) -> Result<Value, ZoteroError> {
         let url = self.build_url_no_lib("creatorFields", None)?;
+        self.handle_response(url)
+    }
+
+    pub fn get_item_type_fields(&self, item_type: &str) -> Result<Value, ZoteroError> {
+        let url = self.build_url_no_lib("itemTypeFields", Some(&[("itemType", item_type)]))?;
+        self.handle_response(url)
+    }
+
+    pub fn get_item_creator_types(&self, item_type: &str) -> Result<Value, ZoteroError> {
+        let url =
+            self.build_url_no_lib("itemTypeCreatorTypes", Some(&[("itemType", item_type)]))?;
         self.handle_response(url)
     }
 
