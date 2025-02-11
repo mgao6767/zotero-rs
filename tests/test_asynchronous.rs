@@ -3,8 +3,8 @@ mod mock_tests {
     use httpmock::prelude::*;
     use std::fs;
     use tokio;
+    use zotero_rs::Error;
     use zotero_rs::ZoteroAsync as Zotero;
-    use zotero_rs::ZoteroError;
 
     #[tokio::test]
     async fn test_get_items() {
@@ -94,7 +94,7 @@ mod mock_tests {
 
         let result = future.await;
         // Assert that the error is TooManyRequests
-        assert!(matches!(result, Err(ZoteroError::TooManyRequests(_))));
+        assert!(matches!(result, Err(Error::TooManyRequests(_))));
     }
 
     #[tokio::test]

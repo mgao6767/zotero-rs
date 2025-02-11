@@ -2,8 +2,8 @@
 mod mock_tests {
     use httpmock::prelude::*;
     use std::fs;
+    use zotero_rs::Error;
     use zotero_rs::Zotero;
-    use zotero_rs::ZoteroError;
 
     #[test]
     fn test_get_items() {
@@ -91,7 +91,7 @@ mod mock_tests {
         zot.set_endpoint(&server.base_url());
         let result = zot.get_items(None);
         // Assert that the error is TooManyRequests
-        assert!(matches!(result, Err(ZoteroError::TooManyRequests(_))));
+        assert!(matches!(result, Err(Error::TooManyRequests(_))));
     }
 
     #[test]
