@@ -348,6 +348,11 @@ impl Zotero {
         self.handle_response(url)
     }
 
+    pub fn get_creator_fields(&self) -> Result<Value, ZoteroError> {
+        let url = self.build_url_no_lib("creatorFields", None)?;
+        self.handle_response(url)
+    }
+
     pub fn get_items_in_batch(&self, since: usize, batch_size: usize) -> ZoteroItemsBatcher {
         ZoteroItemsBatcher::new(self, since, batch_size)
     }
