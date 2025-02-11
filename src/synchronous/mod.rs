@@ -91,6 +91,24 @@ impl Zotero {
         Ok(url)
     }
 
+    fn build_url_no_lib(
+        &self,
+        path: &str,
+        params: Option<&[(&str, &str)]>,
+    ) -> Result<Url, ZoteroError> {
+        let mut url = Url::parse(&format!("{}/{}", self.endpoint, path))?;
+        if let Some(ref loc) = self.locale {
+            url.query_pairs_mut().append_pair("locale", loc);
+        }
+        if let Some(params) = params {
+            let mut pairs = url.query_pairs_mut();
+            for &(key, value) in params {
+                pairs.append_pair(key, value);
+            }
+        }
+        Ok(url)
+    }
+
     fn handle_response(&self, url: Url) -> Result<Value, ZoteroError> {
         let mut attempts = 0;
         let mut backoff = 0.0;
@@ -323,6 +341,11 @@ impl Zotero {
                 response.status()
             )))
         }
+    }
+
+    pub fn get_item_types(&self) -> Result<Value, ZoteroError> {
+        let url = self.build_url_no_lib("itemTypes", None)?;
+        self.handle_response(url)
     }
 
     pub fn get_items_in_batch(&self, since: usize, batch_size: usize) -> ZoteroItemsBatcher {
