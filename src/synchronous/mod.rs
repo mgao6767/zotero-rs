@@ -439,7 +439,7 @@ impl<'a> ZoteroItemsBatcher<'a> {
                 ]))
                 .map_err(|e| ZoteroBatchError::FetchError(Box::new(e)))?,
         };
-        let items = response.as_array().unwrap().clone();
+        let items = response.as_array().unwrap_or(&vec![]).clone();
         if items.is_empty() {
             return Err(ZoteroBatchError::NoMoreItems);
         }
@@ -491,7 +491,7 @@ impl<'a> ZoteroCollectionBatcher<'a> {
                 ("limit", &self.limit.to_string()),
             ]))
             .map_err(|e| ZoteroBatchError::FetchError(Box::new(e)))?;
-        let collections = response.as_array().unwrap().clone();
+        let collections = response.as_array().unwrap_or(&vec![]).clone();
         if collections.is_empty() {
             return Err(ZoteroBatchError::NoMoreItems);
         }
