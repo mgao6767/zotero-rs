@@ -380,6 +380,10 @@ impl Zotero {
     ) -> ZoteroItemsBatcher {
         ZoteroItemsBatcher::new(self, since, batch_size, true)
     }
+
+    pub fn get_collections_in_batch(&self, batch_size: usize) -> ZoteroCollectionBatcher {
+        ZoteroCollectionBatcher::new(self, batch_size)
+    }
 }
 
 #[derive(Error, Debug)]
@@ -456,6 +460,83 @@ impl<'a> Iterator for ZoteroItemsBatcher<'a> {
                 Ok(_) => self.next(),
                 Err(ZoteroBatchError::NoMoreItems) => None,
                 Err(e) => Some(Err(e)),
+            }
+        }
+    }
+}
+
+pub struct ZoteroCollectionBatcher<'a> {
+    zotero: &'a Zotero,
+    start: usize,
+    limit: usize,
+    collections: IntoIter<Value>,
+}
+
+impl<'a> ZoteroCollectionBatcher<'a> {
+    fn new(zotero: &'a Zotero, batch_size: usize) -> Self {
+        Self {
+            zotero,
+            start: 0,
+            limit: batch_size,
+            collections: vec![].into_iter(),
+        }
+    }
+
+    fn fetch_next_batch(&mut self) -> Result<(), ZoteroBatchError> {
+        println!("Fetching collections batch starting at {}", self.start);
+        let response = self
+            .zotero
+            .get_collections(Some(&[
+                ("start", &self.start.to_string()),
+                ("limit", &self.limit.to_string()),
+            ]))
+            .map_err(|e| ZoteroBatchError::FetchError(Box::new(e)))?;
+        let collections = response.as_array().unwrap().clone();
+        if collections.is_empty() {
+            return Err(ZoteroBatchError::NoMoreItems);
+        }
+        self.collections = collections.into_iter();
+        Ok(())
+    }
+}
+
+impl<'a> Iterator for ZoteroCollectionBatcher<'a> {
+    type Item = Result<Value, ZoteroBatchError>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(collection) = self.collections.next() {
+            self.start += 1;
+            Some(Ok(collection))
+        } else {
+            match self.fetch_next_batch() {
+                Ok(_) => self.next(),
+                Err(ZoteroBatchError::NoMoreItems) => None,
+                Err(e) => Some(Err(e)),
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::Zotero;
+    use dotenv::dotenv;
+    use std::env;
+
+    #[test]
+    fn test() {
+        dotenv().ok();
+        let api_key = env::var("ZOTERO_API_KEY").expect("ZOTERO_API_KEY not found");
+        let lib_id = env::var("ZOTERO_LIBRARY_ID").expect("ZOTERO_LIBRARY_ID not found");
+        let zotero = Zotero::group_lib(&lib_id, &api_key).unwrap();
+        for result in zotero.get_collections_in_batch(100) {
+            match result {
+                Ok(c) => {
+                    println!("{:?}", c);
+                }
+                Err(e) => {
+                    eprintln!("Error fetching collection: {}", e);
+                }
             }
         }
     }
