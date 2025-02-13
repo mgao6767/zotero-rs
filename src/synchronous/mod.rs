@@ -370,7 +370,15 @@ impl Zotero {
     }
 
     pub fn get_items_in_batch(&self, since: usize, batch_size: usize) -> ZoteroItemsBatcher {
-        ZoteroItemsBatcher::new(self, since, batch_size)
+        ZoteroItemsBatcher::new(self, since, batch_size, false)
+    }
+
+    pub fn get_trashed_items_in_batch(
+        &self,
+        since: usize,
+        batch_size: usize,
+    ) -> ZoteroItemsBatcher {
+        ZoteroItemsBatcher::new(self, since, batch_size, true)
     }
 }
 
@@ -388,31 +396,45 @@ pub struct ZoteroItemsBatcher<'a> {
     start: usize,
     limit: usize,
     items: IntoIter<Value>,
+    trash: bool,
 }
 
 impl<'a> ZoteroItemsBatcher<'a> {
-    fn new(zotero: &'a Zotero, since: usize, batch_size: usize) -> Self {
+    fn new(zotero: &'a Zotero, since: usize, batch_size: usize, trash: bool) -> Self {
         Self {
             zotero,
             since,
             start: 0,
             limit: batch_size,
             items: vec![].into_iter(),
+            trash: trash,
         }
     }
 
     fn fetch_next_batch(&mut self) -> Result<(), ZoteroBatchError> {
         println!("Fetching batch starting at {}", self.start);
-        let response = self
-            .zotero
-            .get_items(Some(&[
-                ("start", &self.start.to_string()),
-                ("since", &self.since.to_string()),
-                ("limit", &self.limit.to_string()),
-                ("sort", "dateAdded"),
-                ("direction", "asc"),
-            ]))
-            .map_err(|e| ZoteroBatchError::FetchError(Box::new(e)))?;
+        let response = match self.trash {
+            true => self
+                .zotero
+                .get_trash(Some(&[
+                    ("start", &self.start.to_string()),
+                    ("since", &self.since.to_string()),
+                    ("limit", &self.limit.to_string()),
+                    ("sort", "dateAdded"),
+                    ("direction", "asc"),
+                ]))
+                .map_err(|e| ZoteroBatchError::FetchError(Box::new(e)))?,
+            false => self
+                .zotero
+                .get_items(Some(&[
+                    ("start", &self.start.to_string()),
+                    ("since", &self.since.to_string()),
+                    ("limit", &self.limit.to_string()),
+                    ("sort", "dateAdded"),
+                    ("direction", "asc"),
+                ]))
+                .map_err(|e| ZoteroBatchError::FetchError(Box::new(e)))?,
+        };
         let items = response.as_array().unwrap().clone();
         if items.is_empty() {
             return Err(ZoteroBatchError::NoMoreItems);
