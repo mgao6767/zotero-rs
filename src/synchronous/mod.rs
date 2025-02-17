@@ -14,8 +14,8 @@ pub struct Zotero {
     client: Client,
     api_key: String,
     endpoint: String,
-    library_id: String,
-    library_type: String,
+    pub library_id: String,
+    pub library_type: String,
     locale: Option<String>,
     max_retries: u8,
 }
@@ -37,7 +37,11 @@ impl Zotero {
         )
     }
 
-    fn new(library_id: String, library_type: String, api_key: String) -> Result<Self, ZoteroError> {
+    pub fn new(
+        library_id: String,
+        library_type: String,
+        api_key: String,
+    ) -> Result<Self, ZoteroError> {
         let endpoint = "https://api.zotero.org".to_string();
         Ok(Zotero {
             client: Client::builder()
